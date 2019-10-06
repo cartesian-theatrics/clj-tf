@@ -1,7 +1,7 @@
-(ns clj-tf.tf-tree
+(ns clj-tf.core
   (:require
-   [clojure.core.memoize]
-   #?(:cljs [cljs.core.async.impl.timers :refer [skip-list SkipListNode]])
+   #?(:clj [clojure.core.memoize]
+      :cljs [cljs.core.async.impl.timers :refer [skip-list]])
    [clojure.core.matrix :as mat])
   #?(:clj
      (:import [java.util.concurrent ConcurrentSkipListMap]
@@ -17,7 +17,7 @@
        (get-key [this] (.getKey this))
        (get-val [this] (.getValue this))]
       :cljs
-      [SkipListNode
+      [cljs.core.MapEntry
        (get-key [this] (.-key this))
        (get-val [this] (.-val this))]))
 
@@ -60,7 +60,7 @@
     (if (> t (get-key (.-head this)))
       (let [nxt (assoc (get-val (.-head this)) src-frame [tgt-frame tf])]
         (set! (.-head this) #?(:clj (AbstractMap$SimpleImmutableEntry. t nxt)
-                               :cljs (SkipListNode. t nxt)))
+                               :cljs (MapEntry. t nxt nil)))
         (.put skip-list t nxt))
       (let [tree (get-val (.floorEntry skip-list t))
             nxt (assoc tree src-frame [tgt-frame tf])]
@@ -69,5 +69,5 @@
 (defn tf-tree []
   (let [skiplist #?(:clj (ConcurrentSkipListMap.) :cljs (skip-list))]
     (TransformTree. #?(:clj (AbstractMap$SimpleImmutableEntry. 0 {})
-                       :cljs (SkipListNode. 0 {}))
+                       :cljs (MapEntry. 0 {} nil))
                     skiplist)))
