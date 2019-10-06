@@ -12,6 +12,10 @@ read ROS messages.
 # Example
 
 ```clojure
+(require '[tf-tree.core :as tf]
+         '[tf-tree.utils :as tf-utils]
+         '[clojure.core.matrix :as mat])
+
 (def tree (tf/tf-tree))
 
 ;; Add a transform at time t=10 from child frame "planar_lidar" to parent frame "base_link".
