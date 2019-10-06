@@ -69,7 +69,7 @@
         (set! (.-head this) #?(:clj (AbstractMap$SimpleImmutableEntry. t nxt)
                                :cljs (SkipListNode. t nxt)))
         (.put skip-list t nxt))
-      (let [[_ tree] (.floorEntry skip-list t)
+      (let [tree (get-val (.floorEntry skip-list t))
             nxt (assoc tree src-frame [tgt-frame tf])]
         (.put skip-list t nxt)))))
 
