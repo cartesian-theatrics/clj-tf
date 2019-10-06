@@ -86,3 +86,9 @@
     :x (mat/mmul matrix (euler->matrix [0 0 radians]))
     :y (mat/mmul matrix (euler->matrix [0 radians 0]))
     :z (mat/mmul matrix (euler->matrix [radians 0 0]))))
+
+(defn tf-msg->matrix [tf-msg]
+  (let [tr (-> tf-msg :transform :translation)
+        rotation (-> tf-msg :transform :rotation)]
+    (mat/mmul (translation->matrix [(:x tr) (:y tr) (:z tr)])
+              (quaternion->matrix rotation))))

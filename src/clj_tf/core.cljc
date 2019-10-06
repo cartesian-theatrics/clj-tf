@@ -1,6 +1,5 @@
 (ns clj-tf.tf-tree
   (:require
-   [clj-tf.utils :as mat-utils :refer [quaternion->matrix translation->matrix]]
    [clojure.core.memoize]
    #?(:cljs [cljs.core.async.impl.timers :refer [skip-list SkipListNode]])
    [clojure.core.matrix :as mat])
@@ -21,12 +20,6 @@
       [SkipListNode
        (get-key [this] (.-key this))
        (get-val [this] (.-val this))]))
-
-(defn tf-msg->matrix [tf-msg]
-  (let [tr (-> tf-msg :transform :translation)
-        rotation (-> tf-msg :transform :rotation)]
-    (mat/mmul (translation->matrix [(:x tr) (:y tr) (:z tr)])
-              (quaternion->matrix rotation))))
 
 (def compute-transform
   (#?(:clj clojure.core.memoize/lru :cljs identity)
@@ -61,7 +54,7 @@
                        tgt-frame))
   (lookup-transform-chain [this t src-frame tgt-frame]
     (compute-transform-seq (get-val (.floorEntry skip-list t))
-                          src-frame
+                           src-frame
                            tgt-frame))
   (put-transform! [this t src-frame tgt-frame tf]
     (if (> t (get-key (.-head this)))
