@@ -51,9 +51,7 @@
 (defprotocol ITFTree
   (lookup-transform [this t src-frame tgt-frame])
   (lookup-transform-chain [this t src-frame tgt-frame])
-  (put-transform [this t src-frame tgt-frame tf]))
-
-(set! *warn-on-reflection* true)
+  (put-transform! [this t src-frame tgt-frame tf]))
 
 (deftype TransformTree [^:mutable head #?@(:clj [^ConcurrentSkipListMap skip-list] :default [skip-list])]
   ITFTree
@@ -63,9 +61,9 @@
                        tgt-frame))
   (lookup-transform-chain [this t src-frame tgt-frame]
     (compute-transform-seq (get-val (.floorEntry skip-list t))
-                           src-frame
+                          src-frame
                            tgt-frame))
-  (put-transform [this t src-frame tgt-frame tf]
+  (put-transform! [this t src-frame tgt-frame tf]
     (if (> t (get-key (.-head this)))
       (let [nxt (assoc (get-val (.-head this)) src-frame [tgt-frame tf])]
         (set! (.-head this) #?(:clj (AbstractMap$SimpleImmutableEntry. t nxt)
