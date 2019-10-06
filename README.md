@@ -1,7 +1,7 @@
 # Clojure TF
 
-Simple ROS-style Transform Tree for Clojure(Script). It is designed to support the to efficient lookup the 
-homogeneous matrix transform from a source frame to a target frame at a given time. Note that when performing
+A very simple ROS-style Transform Tree for Clojure(Script). It is designed to support the efficient lookup of the 
+nearest homogeneous matrix transform from a source frame to a target frame at a given time. Note that when performing
 a lookup, the source frame must be a descendant of the target frame (i.e. arbitrary tf graph traversal is 
 not supported).
 
