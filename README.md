@@ -5,7 +5,9 @@ homogeneous matrix transform from a source frame to a target frame at a given ti
 a lookup, the source frame must be a descendant of the target frame (i.e. arbitrary tf graph traversal is 
 not supported).
 
-It also includes utility functions for converting quaternions, eurler angles, and translations to 4x4 matrices.
+It also includes utility functions for converting quaternions, eurler angles, translations, and standard ROS tf
+messages to 4x4 matrices. See [clj-rosbag](https://github.com/cartesian-theatrics/clj-rosbag) for a library to
+read ROS messages.
 
 # Example
 
