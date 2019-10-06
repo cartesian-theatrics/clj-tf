@@ -12,14 +12,17 @@ It also includes utility functions for converting quaternions, eurler angles, an
 ```clojure
 (def tree (tf/tf-tree))
 
-;; 
-(tf/put-transform! tree 10 "planar" "slanted" (mat/identity-matrix 4))
-(tf/put-transform! tree 13 "planar" "slanted" (-> (mat/identity-matrix 4)
-                                              (mat/mmul (tf-utils/translation->matrix [1 2 3]))))
+;; Add a transform at time t=10 from child frame "planar_lidar" to parent frame "base_link".
+(tf/put-transform! tree 10 "planar_lidar" "base_link" (mat/identity-matrix 4))
+(tf/put-transform! tree 13 "planar_lidar" "base_link" (-> (mat/identity-matrix 4)
+                                                          (mat/mmul (tf-utils/translation->matrix [1 2 3]))))
 
-(mat/to-nested-vectors (tf/lookup-transform tree 15 "planar" "slanted"))
+;; Lookup the nearest transform at time t=15 from "planar_lidar" to "base_link".
+;; Note, unlike ROS tf, this library won't do any sophisticated bounds checking,
+;; nor will it extrapolate with any kind of forward prediction model.
+(mat/to-nested-vectors (tf/lookup-transform tree 15 "planar_lidar" "base_link"))
 ;; [[1 0 0 1] [0 1 0 2] [0 0 1 3] [0 0 0 1]]
 
-(mat/to-nested-vectors (tf/lookup-transform tree 11 "planar" "slanted"))
+(mat/to-nested-vectors (tf/lookup-transform tree 11 "planar_lidar" "base_link"))
 ;; [[1 0 0 0] [0 1 0 0] [0 0 1 0] [0 0 0 1]]
 ```
