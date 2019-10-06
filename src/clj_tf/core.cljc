@@ -5,7 +5,7 @@
    #?(:cljs [cljs.core.async.impl.timers :refer [skip-list SkipListNode]])
    [clojure.core.matrix :as mat])
   #?(:clj
-     (:import [java.util.concurrent DelayQueue Delayed TimeUnit ConcurrentSkipListMap]
+     (:import [java.util.concurrent ConcurrentSkipListMap]
               [java.util AbstractMap$SimpleImmutableEntry])))
 
 (defprotocol ISkipListEntry
