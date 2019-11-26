@@ -57,7 +57,7 @@
          ci (Math/cos ai) cj (Math/cos aj) ck (Math/cos ak)
          cc (* ci ck) cs (* ci sk)
          sc (* si ck) ss (* si sk)
-         m (mat/identity-matrix 4)
+         m (mat/mutable (mat/identity-matrix 4))
          s! s/set-sel!]
      (if (pos? repetition)
        (-> m

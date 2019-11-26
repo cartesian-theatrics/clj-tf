@@ -42,12 +42,14 @@
              (conj tfs  [src-frame tgt-frame (mat/mmul (peek (peek tfs)) tf-mat)]))))))))
 
 (defprotocol ITFTree
-  (lookup-transform [this t src-frame tgt-frame])
+  (lookup-transform [this src-frame tgt-frame] [this t src-frame tgt-frame])
   (lookup-transform-chain [this t src-frame tgt-frame])
   (put-transform! [this t src-frame tgt-frame tf]))
 
 (deftype TransformTree [^:mutable head #?@(:clj [^ConcurrentSkipListMap skip-list] :default [skip-list])]
   ITFTree
+  (lookup-transform [this src-frame tgt-frame]
+    (compute-transform (get-val (.-head this)) src-frame tgt-frame))
   (lookup-transform [this t src-frame tgt-frame]
     (compute-transform (get-val (.floorEntry skip-list t))
                        src-frame
@@ -64,10 +66,18 @@
         (.put skip-list t nxt))
       (let [tree (get-val (.floorEntry skip-list t))
             nxt (assoc tree src-frame [tgt-frame tf])]
-        (.put skip-list t nxt)))))
+        (.put skip-list t nxt)))
+    this))
 
-(defn tf-tree []
-  (let [skiplist #?(:clj (ConcurrentSkipListMap.) :cljs (skip-list))]
-    (TransformTree. #?(:clj (AbstractMap$SimpleImmutableEntry. 0 {})
-                       :cljs (MapEntry. 0 {} nil))
-                    skiplist)))
+(defn tf-tree
+  ([tfs]
+   (let [skiplist #?(:clj (ConcurrentSkipListMap.) :cljs (skip-list))
+         tree (reduce (fn [ret [src-frame tgt-frame tf]]
+                        (assoc ret src-frame [tgt-frame tf]))
+                      {}
+                      tfs)]
+     (TransformTree. #?(:clj (AbstractMap$SimpleImmutableEntry. 0 tree)
+                        :cljs (MapEntry. 0 {} nil))
+                     skiplist)))
+  ([]
+   (tf-tree [])))
