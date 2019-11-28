@@ -59,14 +59,15 @@
                            src-frame
                            tgt-frame))
   (put-transform! [this t src-frame tgt-frame tf]
-    (if (> t (get-key (.-head this)))
+    (if (pos? (.compareTo t (get-key (.-head this))))
       (let [nxt (assoc (get-val (.-head this)) src-frame [tgt-frame tf])]
         (set! (.-head this) #?(:clj (AbstractMap$SimpleImmutableEntry. t nxt)
                                :cljs (MapEntry. t nxt nil)))
         (.put skip-list t nxt))
-      (let [tree (get-val (.floorEntry skip-list t))
-            nxt (assoc tree src-frame [tgt-frame tf])]
-        (.put skip-list t nxt)))
+      (when-let [entry (.floorEntry skip-list t)]
+        (let [tree (get-val entry)
+              nxt (assoc tree src-frame [tgt-frame tf])]
+          (.put skip-list t nxt))))
     this))
 
 (defn tf-tree
@@ -76,7 +77,7 @@
                         (assoc ret src-frame [tgt-frame tf]))
                       {}
                       tfs)]
-     (TransformTree. #?(:clj (AbstractMap$SimpleImmutableEntry. 0 tree)
+     (TransformTree. #?(:clj (AbstractMap$SimpleImmutableEntry. (java.sql.Timestamp. 0) tree)
                         :cljs (MapEntry. 0 {} nil))
                      skiplist)))
   ([]
