@@ -51,23 +51,27 @@
   (lookup-transform [this src-frame tgt-frame]
     (compute-transform (get-val (.-head this)) src-frame tgt-frame))
   (lookup-transform [this t src-frame tgt-frame]
-    (compute-transform (get-val (.floorEntry skip-list t))
-                       src-frame
-                       tgt-frame))
+    (when-let [entry (.floorEntry skip-list t)]
+      (compute-transform (get-val entry)
+                         src-frame
+                         tgt-frame)))
   (lookup-transform-chain [this t src-frame tgt-frame]
-    (compute-transform-seq (get-val (.floorEntry skip-list t))
-                           src-frame
-                           tgt-frame))
+    (when-let [entry (.floorEntry skip-list t)]
+      (compute-transform-seq (get-val entry)
+                             src-frame
+                             tgt-frame)))
   (put-transform! [this t src-frame tgt-frame tf]
-    (if (> t (get-key (.-head this)))
+    (if (not (neg? (.compareTo t (get-key (.-head this)))))
       (let [nxt (assoc (get-val (.-head this)) src-frame [tgt-frame tf])]
         (set! (.-head this) #?(:clj (AbstractMap$SimpleImmutableEntry. t nxt)
                                :cljs (MapEntry. t nxt nil)))
         (.put skip-list t nxt))
-      (let [tree (get-val (.floorEntry skip-list t))
-            nxt (assoc tree src-frame [tgt-frame tf])]
-        (.put skip-list t nxt)))
+      (when-let [entry (.floorEntry skip-list t)]
+        (let [tree (get-val entry)
+              nxt (assoc tree src-frame [tgt-frame tf])]
+          (.put skip-list t nxt))))
     this))
+
 
 (defn tf-tree
   ([tfs]
@@ -76,7 +80,7 @@
                         (assoc ret src-frame [tgt-frame tf]))
                       {}
                       tfs)]
-     (TransformTree. #?(:clj (AbstractMap$SimpleImmutableEntry. 0 tree)
+     (TransformTree. #?(:clj (AbstractMap$SimpleImmutableEntry. (java.sql.Timestamp. 0) tree)
                         :cljs (MapEntry. 0 {} nil))
                      skiplist)))
   ([]
