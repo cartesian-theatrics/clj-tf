@@ -21,25 +21,21 @@
        (get-key [this] (.-key this))
        (get-val [this] (.-val this))]))
 
-(def compute-transform
-  (#?(:clj clojure.core.memoize/lru :cljs identity)
-   (fn [tf-tree src-frame tgt-frame]
-     (let [[parent-frame tf-mat] (tf-tree src-frame)]
-       (when parent-frame
-         (if (= parent-frame tgt-frame)
-           tf-mat
-           (when-let [tf (compute-transform tf-tree parent-frame tgt-frame)]
-             (mat/mmul tf tf-mat))))))))
+(defn compute-transform [tree src-frame tgt-frame]
+  (let [[parent-frame tf-mat] (get tree src-frame)]
+    (when parent-frame
+      (if (= parent-frame tgt-frame)
+        tf-mat
+        (when-let [tf (compute-transform tree parent-frame tgt-frame)]
+          (mat/mmul tf tf-mat))))))
 
-(def compute-transform-seq
-  (#?(:clj clojure.core.memoize/lru :cljs identity)
-   (fn [tf-tree src-frame tgt-frame]
-     (let [[parent-frame tf-mat] (tf-tree src-frame)]
-       (when parent-frame
-         (if (= parent-frame tgt-frame)
-           [[src-frame tgt-frame tf-mat]]
-           (when-let [tfs (compute-transform-seq tf-tree parent-frame tgt-frame)]
-             (conj tfs  [src-frame tgt-frame (mat/mmul (peek (peek tfs)) tf-mat)]))))))))
+(defn compute-transform-seq [tree src-frame tgt-frame]
+  (let [[parent-frame tf-mat] (get tree src-frame)]
+    (when parent-frame
+      (if (= parent-frame tgt-frame)
+        [[src-frame tgt-frame tf-mat]]
+        (when-let [tfs (compute-transform-seq tree parent-frame tgt-frame)]
+          (conj tfs [src-frame tgt-frame (mat/mmul (peek (peek tfs)) tf-mat)]))))))
 
 (defprotocol ITFTree
   (lookup-transform [this src-frame tgt-frame] [this t src-frame tgt-frame])
@@ -61,17 +57,12 @@
                              src-frame
                              tgt-frame)))
   (put-transform! [this t src-frame tgt-frame tf]
-    (if (not (neg? (.compareTo t (get-key (.-head this)))))
-      (let [nxt (assoc (get-val (.-head this)) src-frame [tgt-frame tf])]
-        (set! (.-head this) #?(:clj (AbstractMap$SimpleImmutableEntry. t nxt)
-                               :cljs (MapEntry. t nxt nil)))
-        (.put skip-list t nxt))
-      (when-let [entry (.floorEntry skip-list t)]
-        (let [tree (get-val entry)
-              nxt (assoc tree src-frame [tgt-frame tf])]
-          (.put skip-list t nxt))))
+    (let [tree (get-val (.-head this))
+          v (assoc tree src-frame [tgt-frame tf])]
+      (set! (.-head this)
+            (AbstractMap$SimpleImmutableEntry. t v))
+      (.put skip-list t v))
     this))
-
 
 (defn tf-tree
   ([tfs]
@@ -85,3 +76,26 @@
                      skiplist)))
   ([]
    (tf-tree [])))
+
+(comment 
+  (def tree (tf-tree))
+  (require '[clj-tf.utils :as utils])
+
+  (put-transform! tree (java.sql.Timestamp. 10) "a" "b" (mat/identity-matrix 4))
+  (put-transform! tree (java.sql.Timestamp. 20) "a" "b" (mat/mmul
+                                                         (mat/identity-matrix 4)
+                                                         (utils/translation->matrix [1 2 3])))
+  (put-transform! tree (java.sql.Timestamp. 30) "a" "b" (mat/mmul
+                                                         (mat/identity-matrix 4)
+                                                         (utils/translation->matrix [1 55 3])))
+
+  (lookup-transform tree (java.sql.Timestamp. 25) "a" "b")
+
+  (def entry (.floorEntry (.-skip-list tree) (java.sql.Timestamp. 27)))
+  (.getValue (.getValue (.getValue entry)))
+
+
+  (.getValue (.floorEntry (.-skip-list tree) (java.sql.Timestamp. 27)))
+
+
+  )

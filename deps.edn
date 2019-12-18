@@ -1,4 +1,5 @@
 {:deps {net.mikera/core.matrix {:mvn/version "0.50.0"}}
+ :paths ["src"]
  :aliases
  {:clj-prod
   {:extra-deps {org.clojure/core.memoize {:mvn/version "0.7.2"}}}
