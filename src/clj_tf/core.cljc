@@ -77,6 +77,9 @@
   ([]
    (tf-tree [])))
 
+(defn tf-tree? [x]
+  (instance? x TransformTree))
+
 (comment 
   (def tree (tf-tree))
   (require '[clj-tf.utils :as utils])
