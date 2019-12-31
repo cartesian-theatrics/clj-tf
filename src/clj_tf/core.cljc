@@ -60,7 +60,8 @@
     (let [tree (get-val (.-head this))
           v (assoc tree src-frame [tgt-frame tf])]
       (set! (.-head this)
-            (AbstractMap$SimpleImmutableEntry. t v))
+            #?(:clj (AbstractMap$SimpleImmutableEntry. t v)
+               :cljs (MapEntry. t v nil)))
       (.put skip-list t v))
     this))
 
