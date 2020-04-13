@@ -1,3 +1,5 @@
+[![Clojars Project](https://img.shields.io/clojars/v/org.cartesiantheatrics/clj-tf.svg)](https://clojars.org/org.cartesiantheatrics/clj-tf)
+
 # Clojure TF
 
 A very simple ROS-style Transform Tree for Clojure(Script). It is designed to support the efficient lookup of the 
@@ -12,8 +14,8 @@ read ROS messages.
 # Example
 
 ```clojure
-(require '[tf-tree.core :as tf]
-         '[tf-tree.utils :as tf-utils]
+(require '[clj-tf.core :as tf]
+         '[clj-tf.utils :as tf-utils]
          '[clojure.core.matrix :as mat])
 
 (def tree (tf/tf-tree))
