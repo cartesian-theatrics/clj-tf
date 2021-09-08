@@ -4,8 +4,22 @@
    [clojure.core.matrix.selection :as s]))
 
 (defn matrix44
-  [data] (-> (mat/matrix data)
-             (mat/reshape [4 4])))
+  ([]
+   (matrix44 [1 0 0 0
+              0 1 0 0
+              0 0 1 0
+              0 0 0 1]))
+  ([data] (-> (mat/matrix data)
+              (mat/reshape [4 4]))))
+
+(defn matrix33
+  ([]
+   (matrix33 [1 0 0
+              0 1 0
+              0 0 1]))
+  ([data] (-> (mat/matrix data)
+              (mat/mutable)
+              (mat/reshape [3 3]))))
 
 (defn translation->matrix [[x y z]]
   (matrix44
@@ -47,8 +61,8 @@
          j (next-axis (+ i parity))
          k (next-axis (let [idx (inc (- i parity))]
                         (if (not (neg? idx))
-                           idx
-                           (+ (count next-axis) idx))))
+                          idx
+                          (+ (count next-axis) idx))))
          [ai aj ak] (if (pos? frame) [ak aj ai] [ai aj ak])
          [ai aj ak] (if (pos? parity)
                       [(- ai) (- aj) (- ak)]
@@ -81,11 +95,70 @@
            (s! k j (* cj si))
            (s! k k (* cj ci)))))))
 
-(defn rotate [matrix axis radians]
-  (case axis
-    :x (mat/mmul matrix (euler->matrix [0 0 radians]))
-    :y (mat/mmul matrix (euler->matrix [0 radians 0]))
-    :z (mat/mmul matrix (euler->matrix [radians 0 0]))))
+(defn euler->rotation-matrix
+  ([angles axes]
+   (mat/mutable
+    (mat/select (euler->matrix angles axes)
+                :butlast :butlast)))
+  ([angles]
+   (euler->rotation-matrix angles :sxyz)))
+
+(defn rotate
+  ([matrix [xr yr zr]]
+   (mat/mmul matrix (euler->matrix [zr yr xr])))
+  ([matrix axis radians]
+   (case axis
+     :x (mat/mmul matrix (euler->matrix [0 0 radians]))
+     :y (mat/mmul matrix (euler->matrix [0 radians 0]))
+     :z (mat/mmul matrix (euler->matrix [radians 0 0])))))
+
+(defn mul
+  ([m o]
+   (mat/mmul m o))
+  ([m o & more]
+   (apply mat/mmul m o more)))
+
+(defn cross [a b]
+  (mat/cross a b))
+
+(defn dot [a b]
+  (mat/dot a b))
+
+(defn add
+  ([a b]
+   (mat/add  a b))
+  ([a b & more]
+   (apply mat/add a b more)))
+
+(defn mag
+  ([a] (mat/magnitude a)))
+
+(defn sub
+  ([a b]
+   (mat/sub a b))
+  ([a b & more]
+   (apply mat/sub a b more)))
+
+(defn yaw [matrix]
+  (Math/atan (/ (mat/select matrix 1 0)
+                (mat/select matrix 0 0))))
+
+(defn pitch [matrix]
+  (Math/atan (/ (- (mat/select matrix 2 0))
+                (Math/sqrt (+ (Math/pow (mat/select matrix 2 1) 2)
+                              (Math/pow (mat/select matrix 2 2) 2))))))
+
+(defn roll [matrix]
+  (Math/atan (/ (mat/select matrix 2 1) (mat/select matrix 2 2))))
+
+(defn yaw-pitch-roll [matrix]
+  [(yaw matrix) (pitch matrix) (roll matrix)])
+
+(defn translation [matrix]
+  (mat/select matrix :butlast 3))
+
+(defn translate [matrix xyz]
+  (mat/mmul matrix (translation->matrix xyz)))
 
 (defn tf-msg->matrix [tf-msg]
   (let [tr (-> tf-msg :transform :translation)
